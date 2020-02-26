@@ -17,7 +17,7 @@ SCREENSHOT = False
 if(SHUTDOWN):
     input('WARNING: System will SHUTDOWN after the program conclusion.')
 
-# Resize method: Nearest Neighbour
+# Resize method: Nearest Neighbour.
 width = 224
 height = 224
 
@@ -36,7 +36,7 @@ try:
                       include_top=True, # Include or not the fully connected layers.
                       input_shape=(width, height, 3))
     
-    conv_base.layers.pop()
+    conv_base.layers.pop() # Dismiss the std VGG16 output layer.
     # conv_base.summary()
     
     conv_base.trainable = False    
@@ -52,11 +52,11 @@ try:
     model.add(layers.Dense(1, activation='sigmoid')) 
     
     set_trainable = False
-    for layer in model.layers:
+    for layer in model.layers: # Set all dense layer to trainable.
         if layer.name == 'vgg16':
             layer.trainable = True
             for sublayer in layer.layers:
-                if sublayer.name == 'fc1': # Primeira camada densa
+                if sublayer.name == 'fc1': # First VGG16 dense layer.
                     set_trainable = True
                 if set_trainable:
                     sublayer.trainable = True
@@ -98,7 +98,7 @@ try:
             class_mode='binary')
     
     model.compile(loss='binary_crossentropy',
-                  optimizer=optimizers.RMSprop(lr=0.001), # High learning rate
+                  optimizer=optimizers.RMSprop(lr=0.001), # High learning rate.
                   metrics=['accuracy'])
     
     from tensorflow.python.client import device_lib
@@ -120,7 +120,7 @@ try:
         if layer.name == 'vgg16':
             layer.trainable = True
             for sublayer in layer.layers:
-                if sublayer.name == 'block5_conv3':
+                if sublayer.name == 'block5_conv3': # First convolutional layer.
                     set_trainable = True
                 if set_trainable:
                     sublayer.trainable = True
@@ -128,13 +128,6 @@ try:
                     sublayer.trainable = False
      
     model.summary()
-    
-# =============================================================================
-#     for layer in model.layers:
-#         if layer.name == 'vgg16':
-#             for sublayer in layer.layers:
-#                 print(sublayer.name + str(sublayer.trainable))
-# =============================================================================
 
     if(SCREENSHOT):
         time.sleep(2)
@@ -142,7 +135,7 @@ try:
         myScreenshot.save(r'C:\Users\Pichau\Desktop\model_summary.png')
     
     model.compile(loss='binary_crossentropy',
-                  optimizer=optimizers.RMSprop(lr=2e-5), # Much lower learning rate (fine-tuning)
+                  optimizer=optimizers.RMSprop(lr=2e-5), # Much lower learning rate (fine-tuning).
                   metrics=['accuracy'])
     
     history = model.fit_generator(
@@ -155,7 +148,7 @@ try:
            )
     
     
-    # Exponential moving averages
+    # Exponential moving averages (used for plotting the graphs).
     def smooth_curve(points, factor=0.8):
       smoothed_points = []
       for point in points:
@@ -196,6 +189,7 @@ try:
     # =============================================================================
     
     # Normal
+    # =============================================================================
     plt.plot(epochs, acc, 'bo', label='Training acc')
     plt.plot(epochs, val_acc, 'b', label='Validation acc')
     plt.title('Training and validation accuracy')
@@ -219,16 +213,12 @@ try:
         time.sleep(5)        
         myScreenshot = pyautogui.screenshot()
         myScreenshot.save(r'C:\Users\Pichau\Desktop\graph2.png')
+    # =============================================================================
     
-    # =============================================================================
-    # myScreenshot = pyautogui.screenshot()
-    # myScreenshot.save(r'C:\Users\Pichau\Desktop\graphs.png')
-    # =============================================================================
+    # Confusion Matrix and Classification Report
     
     import numpy as np
     from sklearn.metrics import classification_report, confusion_matrix
-    
-    # Confusion Matrix and Classification Report
     
     test_datagen = ImageDataGenerator(rescale = 1./255)
     test_set = test_datagen.flow_from_directory('ISBI2016_ISIC_Part3_Test_Data',
