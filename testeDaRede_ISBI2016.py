@@ -6,38 +6,60 @@ print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-import time
-import pyautogui
+import os
 
-# ============================================================================
-SHUTDOWN = False
-SCREENSHOT = False
-# ============================================================================
+directory = os.getcwd()
 
-if(SHUTDOWN):
-    input('WARNING: System will SHUTDOWN after the program conclusion.')
+# 8 classes
 
-# Resize method: Nearest Neighbour.
+# Resize method: Nearest Neighbour
 width = 224
 height = 224
 
 batch_size = 20
-epochs_2phase = 100
+epochs = 120
+epochs_before = 20
+validation_split = 0.2
+lr_bef = 1e-3
+lr_final = 1e-4
 
-folder = 'ISBI2016_ISIC_Part3_Training_Data'
+train_folder = 'dataset_final_training'
+# test_folder = 'dataset_final_test'
+test_folder = 'dataset_final_training'
+save_file = '../../Desktop/Results/VGGs e EfficientNet/'
+model_name = None
+
+def get_amount_of_images(path):
+    imagesQt = 0
+    curFolder = directory + '/' + path
+    for folder in os.listdir(curFolder):
+        imagesQt += len(os.listdir(curFolder + '/' + folder))
+    return imagesQt
 
 # ============================================================================
-
-try:
-
+    
+for i in range(2):
+    
+    from keras.applications import VGG19
     from keras.applications import VGG16
     
-    conv_base = VGG16(weights='imagenet',
-                      include_top=True, # Include or not the fully connected layers.
-                      input_shape=(width, height, 3))
+    conv_base = None
     
-    conv_base.layers.pop() # Dismiss the std VGG16 output layer.
-    # conv_base.summary()
+    if i == 0:
+        print('=========== VGG19:')
+        conv_base = VGG19(weights='imagenet',
+                          include_top=False, # Include or not the fully connected layers.
+                          input_shape=(width, height, 3))
+        save_file += 'VGG19/'
+        model_name = 'vgg19'
+    else:
+        print('=========== VGG16:')
+        conv_base = VGG16(weights='imagenet',
+                          include_top=False, # Include or not the fully connected layers.
+                          input_shape=(width, height, 3))
+        save_file += 'VGG16/'
+        model_name = 'vgg16'
+        
     
     conv_base.trainable = False    
     
@@ -45,28 +67,17 @@ try:
     
     from keras import models
     from keras import layers
-    # from keras.layers import Dropout
     
     model = models.Sequential()
-    model.add(conv_base)    
-    model.add(layers.Dense(1, activation='sigmoid')) 
+    model.add(conv_base)
     
-    set_trainable = False
-    for layer in model.layers: # Set all dense layer to trainable.
-        if layer.name == 'vgg16':
-            layer.trainable = True
-            for sublayer in layer.layers:
-                if sublayer.name == 'fc1': # First VGG16 dense layer.
-                    set_trainable = True
-                if set_trainable:
-                    sublayer.trainable = True
-                else:
-                    sublayer.trainable = False
-                    
-    # conv_base.summary()    
-    model.summary()
-    
-    print('Number of trainable weights after freezing the conv base:', len(model.trainable_weights))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(units = 128, activation = 'relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(units = 64, activation = 'relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(units = len(os.listdir(directory + '/' + train_folder)), activation = 'softmax'))
+    # model.summary()
     
     from keras.preprocessing.image import ImageDataGenerator
     from keras import optimizers
@@ -78,87 +89,57 @@ try:
           height_shift_range=0.2,
           shear_range=0.2,
           zoom_range=0.2,
-          validation_split = 0.2, # 20% validation
-          horizontal_flip=True
-          )
+          # 20% validation
+          validation_split = validation_split,
+          horizontal_flip=True)
     
     train_generator = full_datagen.flow_from_directory(
-            folder,
+            train_folder,
             target_size=(width, height),
             batch_size=batch_size,
             subset = 'training',
-            class_mode='binary')
+            class_mode='categorical')
     
     validation_generator = full_datagen.flow_from_directory(
-            folder,
+            train_folder,
             target_size=(width, height),
             batch_size=batch_size,
             subset = 'validation',
             shuffle=False,
-            class_mode='binary')
+            class_mode='categorical')
     
-    model.compile(loss='binary_crossentropy',
-                  optimizer=optimizers.RMSprop(lr=0.001), # High learning rate.
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.SGD(lr=lr_bef), # High learning Rate
                   metrics=['accuracy'])
     
-    from tensorflow.python.client import device_lib
-    print('\n')
-    print(device_lib.list_local_devices())
     
+    imagesQt = get_amount_of_images(train_folder)
+    
+    # Before fine-tune
     history = model.fit_generator(
            train_generator,
-           steps_per_epoch=900 // batch_size+1,
-           epochs=20,
+           steps_per_epoch=imagesQt // batch_size+1,
+           epochs=epochs_before,
            validation_data=validation_generator,
-           validation_steps=180 // batch_size+1,
-           #verbose=2)
+           validation_steps= (imagesQt * validation_split) // batch_size+1,
+           #verbose=2
            )
     
-    # Fine-tuning
-    set_trainable = False
-    for layer in model.layers:
-        if layer.name == 'vgg16':
-            layer.trainable = True
-            for sublayer in layer.layers:
-                if sublayer.name == 'block5_conv3': # First convolutional layer.
-                    set_trainable = True
-                if set_trainable:
-                    sublayer.trainable = True
-                else:
-                    sublayer.trainable = False
-     
-    model.summary()
-
-    if(SCREENSHOT):
-        time.sleep(2)
-        myScreenshot = pyautogui.screenshot()
-        myScreenshot.save(r'C:\Users\Pichau\Desktop\model_summary.png')
+    # Fine-tune
+    conv_base.trainable = True    
     
-    model.compile(loss='binary_crossentropy',
-                  optimizer=optimizers.RMSprop(lr=2e-5), # Much lower learning rate (fine-tuning).
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.SGD(lr=lr_final), # Lower learning Rate (fine-tuning)
                   metrics=['accuracy'])
     
     history = model.fit_generator(
            train_generator,
-           steps_per_epoch=900 // batch_size+1,
-           epochs=epochs_2phase,
+           steps_per_epoch=imagesQt // batch_size+1,
+           epochs=epochs,
            validation_data=validation_generator,
-           validation_steps=180 // batch_size+1,
-           #verbose=2)
-           )
-    
-    
-    # Exponential moving averages (used for plotting the graphs).
-    def smooth_curve(points, factor=0.8):
-      smoothed_points = []
-      for point in points:
-        if smoothed_points:
-          previous = smoothed_points[-1]
-          smoothed_points.append(previous * factor + point * (1 - factor))
-        else:
-          smoothed_points.append(point)
-      return smoothed_points
-    
+           validation_steps= (imagesQt * validation_split) // batch_size+1,
+           #verbose=2
+           )    
     
     acc = history.history['acc']
     val_acc = history.history['val_acc']
@@ -167,86 +148,66 @@ try:
     
     epochs = range(len(acc))
     
-    # Plotting 
-    
+    # Plotting    
     import matplotlib.pyplot as plt
     
-    # Smoothed
-    # =============================================================================
-    # plt.plot(epochs, smooth_curve(acc), 'bo', label='Training acc')
-    # plt.plot(epochs, smooth_curve(val_acc), 'b', label='Validation acc')
-    # plt.title('Training and validation accuracy')
-    # plt.legend()
-    # 
-    # plt.figure()
-    # 
-    # plt.plot(epochs, smooth_curve(loss), 'bo', label='Training loss')
-    # plt.plot(epochs, smooth_curve(val_loss), 'b', label='Validation loss')
-    # plt.title('Training and validation loss')
-    # plt.legend()
-    # 
-    # plt.show()
-    # =============================================================================
-    
     # Normal
-    # =============================================================================
     plt.plot(epochs, acc, 'bo', label='Training acc')
     plt.plot(epochs, val_acc, 'b', label='Validation acc')
     plt.title('Training and validation accuracy')
     plt.legend()
     
+    plt.savefig(save_file + '1.png')
     plt.show()
-    
-    if(SCREENSHOT):
-        time.sleep(5)
-        myScreenshot = pyautogui.screenshot()
-        myScreenshot.save(r'C:\Users\Pichau\Desktop\graph1.png')
     
     plt.plot(epochs, loss, 'bo', label='Training loss')
     plt.plot(epochs, val_loss, 'b', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
     
+    plt.savefig(save_file + '2.png')
     plt.show()
-    
-    if(SCREENSHOT):
-        time.sleep(5)        
-        myScreenshot = pyautogui.screenshot()
-        myScreenshot.save(r'C:\Users\Pichau\Desktop\graph2.png')
-    # =============================================================================
-    
-    # Confusion Matrix and Classification Report
     
     import numpy as np
     from sklearn.metrics import classification_report, confusion_matrix
     
+    # Confusion Matrix and Classification Report
+    
     test_datagen = ImageDataGenerator(rescale = 1./255)
-    test_set = test_datagen.flow_from_directory('ISBI2016_ISIC_Part3_Test_Data',
+    test_set = test_datagen.flow_from_directory(test_folder,
                                                 target_size = (width, height),
                                                 batch_size = batch_size,
-                                                class_mode = 'binary')
+                                                class_mode = 'categorical')
     
-    Y_pred = model.predict_generator(test_set, 379 // batch_size+1)
+    
+    imagesQt = get_amount_of_images(test_folder)
+    
+    target_names = []
+    for folder in os.listdir(directory + '/' + train_folder):
+        target_names.append(folder.capitalize())    
+    # target_names = ['Cobblestone', 'Globular', 'Hommogeneous', 'Multicomponent', 'Parallel', 'Reticular', 'Starburst', 'Unspecific']
+    
+    Y_pred = model.predict_generator(test_set, imagesQt // batch_size)
     y_pred = np.argmax(Y_pred, axis=1)
-    print('Confusion Matrix')
-    print(confusion_matrix(test_set.classes, y_pred))
-    print('Classification Report')
-    target_names = ['Benign', 'Malignant']
-    print(classification_report(test_set.classes, y_pred, target_names=target_names))
     
-    if(SCREENSHOT):
-        time.sleep(3)        
-        myScreenshot = pyautogui.screenshot()
-        myScreenshot.save(r'C:\Users\Pichau\Desktop\CM.png')
+    f = open(save_file + 'CM.txt', "a")
+    matrix = confusion_matrix(test_set.classes, y_pred)
+    f.write('\nConfusion Matrix - Validation\n')
+    for row in matrix:
+        f.write('[')
+        for number in row:
+            f.write("{: >4}".format(number))
+        f.write(']\n')
+    report = classification_report(test_set.classes, y_pred, target_names=target_names)
+    f.write('\nClassification Report\n' + report)
+    f.close()
     
-except Exception as e:
-    print(e)
-    if(SCREENSHOT):    
-        time.sleep(1)
-        myScreenshot = pyautogui.screenshot()
-        myScreenshot.save(r'C:\Users\Pichau\Desktop\ERROR.png')
-
-if SHUTDOWN:   
-    import os
-    os.system('shutdown -s -f')
+    model.save(model_name + '.h5')
+    
+# =============================================================================
+#     print('Confusion Matrix')
+#     print(confusion_matrix(test_set.classes, y_pred))
+#     print('Classification Report')
+#     print(classification_report(test_set.classes, y_pred, target_names=target_names))
+# =============================================================================
 
