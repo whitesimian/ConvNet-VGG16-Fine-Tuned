@@ -96,7 +96,6 @@ transfer_model = models.resnet50(pretrained=True)
 
 # Freezing the convolutional layers, except batch normalizations.
 for name, param in transfer_model.named_parameters():
-    #print(name)
     if("bn" not in name):
         param.requires_grad = False
 
@@ -135,7 +134,7 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         
         # Progress
         if batch_num%100==0:
-            print('Finding lr... nof data: ' + str(batch_num/100) + '00')
+            print('Finding lr... nof data: ' + str(batch_num))
             
         inputs, targets = data
         inputs = inputs.to(device)
@@ -145,7 +144,6 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         loss = loss_fn(outputs, targets)
 
         # Crash out if loss explodes
-
         if batch_num > 1 and loss > 4 * best_loss:
             if(len(log_lrs) > 20):
                 return log_lrs[10:-5], losses[10:-5]
@@ -153,7 +151,6 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
                 return log_lrs, losses
 
         # Record the best loss
-
         if loss < best_loss or batch_num == 1:
             best_loss = loss
 
@@ -162,12 +159,10 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         log_lrs.append((lr))
 
         # Do the backward pass and optimize
-
         loss.backward()
         optimizer.step()
 
         # Update the lr for the next step and store
-
         lr *= update_step
         optimizer.param_groups[0]["lr"] = lr
     if(len(log_lrs) > 20):
@@ -355,7 +350,7 @@ for i in range(len(confusion_matrix)):
     f.write('{:>12.4f}'.format(sens) + ' ')
     f.write('{:>12.4f}'.format(specf) + '\n')
 
-# For balanced datasets
+# For balanced datasets.
 acc_avg /= num_classes
 sens_avg /= num_classes
 specf_avg /= num_classes
