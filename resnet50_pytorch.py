@@ -7,7 +7,7 @@ import torchvision
 import torchvision.models as models
 from torchvision import transforms
 from PIL import Image
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from PIL import ImageFile
 import gc
@@ -38,7 +38,7 @@ import gc
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 folder_path = r'C:\Users\Pichau\PycharmProjects\manage_files\global_patterns'
-save_file = '../../Desktop/Results/ResNet50'
+save_file = '../../Desktop/Results/ResNet50/'
 model_name = 'resnet50'
 
 im_size = 224
@@ -178,7 +178,8 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
 optimizer = optim.Adam(transfer_model.parameters())
 
 logs,losses = find_lr(transfer_model, torch.nn.CrossEntropyLoss(), optimizer, train_data_loader)
-#plt.plot(logs, losses)  # Plotting learning rate graph.
+plt.plot(logs, losses)  # Plotting learning rate graph.
+plt.savefig(save_file + 'lr.png')
 
 # Finding best learning rate using the heuristics above.
 best = 0
@@ -256,7 +257,7 @@ optimizer = optim.Adam([
 train(transfer_model, optimizer, torch.nn.CrossEntropyLoss(), train_data_loader, val_data_loader, epochs=epochs_ft, device=device)
    
 # Saving model
-torch.save(transfer_model, './models/resnet50_' + str(epochs) + 'epochs')
+torch.save(transfer_model, './models/resnet50_' + str(epochs + epochs_ft) + 'epochs')
  
 
 model = transfer_model
