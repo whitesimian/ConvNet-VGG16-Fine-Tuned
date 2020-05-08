@@ -11,6 +11,29 @@ from PIL import Image
 import numpy as np
 from PIL import ImageFile
 import gc
+
+# =============================================================================
+# Format of data folders:
+#
+# ./training
+#     .../class1
+#     .../class2
+#     .
+#     .
+#     .
+# ./validation
+#     .../class1
+#     .../class2
+#     .
+#     .
+#     .
+# ./test
+#     .../class1
+#     .../class2
+#     .
+#     .
+#     .
+# =============================================================================
  
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -26,6 +49,7 @@ testing_with = 'validation'
 
 import os
 num_classes = len(os.listdir(folder_path + r'\training'))
+print('Found ' + str(num_classes) + ' classes.')
 
 #torch.hub.list('pytorch/vision')  # Modelos disponíveis no github
 
@@ -223,7 +247,7 @@ for layer in unfreeze_layers:
     for param in layer.parameters():
             param.requires_grad = True
 
-optimizer = optimizer.Adam([
+optimizer = optim.Adam([
         { 'params': transfer_model.layer4.parameters(), 'lr': found_lr /3},
         { 'params': transfer_model.layer3.parameters(), 'lr': found_lr /9},
         ], lr=found_lr)
