@@ -297,8 +297,10 @@ valid_loss /= len(test_data_loader.dataset)
 
 print(confusion_matrix)
 
+from math import trunc
+
 # Saving confusion matrix to text file
-f = open(save_file + 'CM.txt', "a")
+f = open(save_file + '/CM.txt', "a")
 f.write('Confusion matrix for ' + testing_with + ' dataset:\n[[')
 first = True
 for row in confusion_matrix:
@@ -307,8 +309,9 @@ for row in confusion_matrix:
     else:
         first = False
     for number in row:
-        f.write("{: >4}".format(number))
+        f.write("{: >4}".format(trunc(number)))
     f.write(']')
 f.write(']')
+f.close()
 
 
