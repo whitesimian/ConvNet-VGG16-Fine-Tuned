@@ -302,7 +302,7 @@ from math import trunc
 # Metrics
    
 # Saving confusion matrix to text file
-f = open(save_file + '/CM5.txt', "a")
+f = open(save_file + '/CM.txt', "a")
 f.write('Confusion matrix for ' + testing_with + ' dataset:\n[[')
 first = True
 for row in confusion_matrix:
