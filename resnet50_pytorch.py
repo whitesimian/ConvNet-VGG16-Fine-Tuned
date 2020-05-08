@@ -19,8 +19,8 @@ save_file = '../../Desktop/Results/ResNet50'
 model_name = 'resnet50'
 
 im_size = 224
-epochs = 20
-epochs_ft = 50
+epochs = 20  # Epochs before fine-tuning.
+epochs_ft = 50  # Epochs for fine-tuning.
 batch_size = 32
 testing_with = 'validation'
 
