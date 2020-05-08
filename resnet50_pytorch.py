@@ -252,7 +252,8 @@ optimizer = optim.Adam([
 train(transfer_model, optimizer, torch.nn.CrossEntropyLoss(), train_data_loader, val_data_loader, epochs=epochs_ft, device=device)
    
 # Saving model
-torch.save(transfer_model, './models/resnet50_' + str(epochs + epochs_ft) + 'epochs')
+torch.save(transfer_model, './models/' + model_name + '_' + str(epochs + epochs_ft) + 'epochs')
+torch.save(transfer_model.state_dict(), './models/' + model_name + '_dict_' + str(epochs + epochs_ft) + 'epochs')
  
 
 model = transfer_model
