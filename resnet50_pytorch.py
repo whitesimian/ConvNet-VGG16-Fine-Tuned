@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import ImageFile
 import gc
+import os
 
 # =============================================================================
 # Format of data folders:
@@ -47,7 +48,6 @@ epochs_ft = 50  # Epochs for fine-tuning.
 batch_size = 32
 testing_with = 'validation'
 
-import os
 num_classes = len(os.listdir(folder_path + r'\training'))
 print('Found ' + str(num_classes) + ' classes.')
 
@@ -297,10 +297,14 @@ valid_loss /= len(test_data_loader.dataset)
 
 print(confusion_matrix)
 
-from math import trunc
+from math import trunc           
+            
+confusion_matrix = [[1,2,3],[4,5,6],[7,8,9]]
 
+# Metrics
+   
 # Saving confusion matrix to text file
-f = open(save_file + '/CM.txt', "a")
+f = open(save_file + '/CM5.txt', "a")
 f.write('Confusion matrix for ' + testing_with + ' dataset:\n[[')
 first = True
 for row in confusion_matrix:
@@ -311,7 +315,55 @@ for row in confusion_matrix:
     for number in row:
         f.write("{: >4}".format(trunc(number)))
     f.write(']')
-f.write(']')
+f.write(']\n\n') 
+            
+target_names = []; longer = 0
+for folder in os.listdir(folder_path + r'/training'):
+    target_names.append(folder.capitalize())
+    longer = max(longer, len(folder))
+
+total = 0
+for row in confusion_matrix:
+    total += sum(row)
+
+f.write('METRICS:\n')
+f.write(' '*longer + 3*' ')
+f.write('{:>12}'.format('Accuracy') + ' ')
+f.write('{:>12}'.format('Sensitivity') + ' ')
+f.write('{:>12}'.format('Specificity\n'))
+
+acc_avg = 0
+sens_avg = 0
+specf_avg = 0
+for i in range(len(confusion_matrix)):
+    f.write(('{:<' + str(longer) + '}').format(target_names[i]) + '   ')
+    TP = 0; TN = 0; FP = 0; FN = 0
+    for j in range(len(confusion_matrix[i])):
+        if i==j:
+            TP += confusion_matrix[i][j]
+        else:
+            FP += confusion_matrix[i][j]
+    for j in range(len(confusion_matrix)):
+        if j!=i:
+            FN += confusion_matrix[i][j]
+    TN = total - confusion_matrix[i][i] - FN
+    acc = float(TN+TP)/(TN+TP+FN+FP)
+    sens = float(TP)/(TP+FN)
+    specf = float(TN)/(TN+FP)
+    acc_avg += acc
+    sens_avg += sens
+    specf_avg += specf
+    f.write('{:>12.4f}'.format(acc) + ' ')
+    f.write('{:>12.4f}'.format(sens) + ' ')
+    f.write('{:>12.4f}'.format(specf) + '\n')
+
+# For balanced datasets
+acc_avg /= num_classes
+sens_avg /= num_classes
+specf_avg /= num_classes
+
+f.write('\n\n===============\nAccuracy avg: ' + '{:.4f}'.format(acc_avg) + '\nSensitivity avg: ' +'{:.4f}'.format(sens_avg) + '\nSpecificity avg: ' + '{:.4f}'.format(specf_avg) + '\n')
+
 f.close()
 
 
