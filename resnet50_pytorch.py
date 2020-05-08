@@ -96,7 +96,8 @@ else:
 # rate you’ve determined from looking at the graph!
 # =============================================================================
 
-def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-6, final_value=10.0, device="cpu"):
+# Heuristic to gather the data of loss values through a given learning rate range.
+def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_value=10.0, device="cpu"):
     number_in_epoch = len(train_loader) - 1
     update_step = (final_value / init_value) ** (1 / number_in_epoch)
     lr = init_value
@@ -155,13 +156,13 @@ optimizer = optim.Adam(transfer_model.parameters())
 logs,losses = find_lr(transfer_model, torch.nn.CrossEntropyLoss(), optimizer, train_data_loader)
 #plt.plot(logs, losses)  # Plotting learning rate graph.
 
-# Finding best learning rate.
+# Finding best learning rate using the heuristics above.
 best = 0
 found_lr = None
 for i in range(len(logs)):
     if i != 0:
         cur = (losses[i-1] - losses[i]) / (logs[i] - logs[i-1])
-        if cur > best and logs[i-1] > 1e-4:  # Minimum 1e-4
+        if cur > best and logs[i-1] > 1e-4:  # Minimum 1e-4.
             best = cur
             found_lr = logs[i-1]
 print('Reportedly optimal learning rate: ' + str(found_lr))
