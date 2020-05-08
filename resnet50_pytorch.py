@@ -298,8 +298,6 @@ valid_loss /= len(test_data_loader.dataset)
 print(confusion_matrix)
 
 from math import trunc           
-            
-confusion_matrix = [[1,2,3],[4,5,6],[7,8,9]]
 
 # Metrics
    
