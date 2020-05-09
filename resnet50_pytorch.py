@@ -165,10 +165,7 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         # Update the lr for the next step and store
         lr *= update_step
         optimizer.param_groups[0]["lr"] = lr
-    if(len(log_lrs) > 20):
-        return log_lrs[10:-5], losses[10:-5]
-    else:
-        return log_lrs, losses
+    return log_lrs[10:-5], losses[10:-5]
 
 optimizer = optim.Adam(transfer_model.parameters())
 
@@ -324,7 +321,7 @@ f.write('METRICS:\n')
 f.write(' '*longer + 3*' ')
 f.write('{:>12}'.format('Accuracy') + ' ')
 f.write('{:>12}'.format('Sensitivity') + ' ')
-f.write('{:>12}'.format('Specificity\n'))
+f.write('{:>12}'.format(' Specificity\n'))
 
 acc_avg = 0
 sens_avg = 0
@@ -356,7 +353,7 @@ acc_avg /= num_classes
 sens_avg /= num_classes
 specf_avg /= num_classes
 
-f.write('\n\n===============\nAccuracy avg: ' + '{:.4f}'.format(acc_avg) + '\nSensitivity avg: ' +'{:.4f}'.format(sens_avg) + '\nSpecificity avg: ' + '{:.4f}'.format(specf_avg) + '\n')
+f.write('\n\n===============\nAccuracy avg:    ' + '{:.4f}'.format(acc_avg) + '\nSensitivity avg: ' +'{:.4f}'.format(sens_avg) + '\nSpecificity avg: ' + '{:.4f}'.format(specf_avg) + '\n')
 
 f.close()
 
