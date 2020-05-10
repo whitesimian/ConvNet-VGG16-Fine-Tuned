@@ -286,7 +286,7 @@ for batch in data_loader:
   correct = torch.eq(torch.max(F.softmax(output), dim=1)[1], targets).view(-1)
   num_correct += torch.sum(correct).item()
   num_examples += correct.shape[0]
-valid_loss /= len(test_data_loader.dataset)
+valid_loss /= len(data_loader.dataset)
 
 print(confusion_matrix)
 
