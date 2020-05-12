@@ -42,6 +42,9 @@ folder_path = './global_patterns'
 save_file = '../../Desktop/Results/ResNet50/'
 model_name = 'resnet50'
 
+if not os.path.isdir(save_file):
+    os.mkdir(save_file)
+
 im_size = 224
 epochs = 20  # Epochs before fine-tuning.
 epochs_ft = 30  # Epochs for fine-tuning.
