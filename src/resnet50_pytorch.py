@@ -181,7 +181,7 @@ for i in range(len(logs)):
         cur = (losses[i-1] - losses[i]) / (logs[i] - logs[i-1])
         if cur > best and logs[i-1] > 1e-4:  # Minimum 1e-4.
             best = cur
-            found_lr = logs[i-1]
+            found_lr = logs[i-1] + (logs[i] - logs[i-1])/3  # 1/3 of the way.
 print('Reportedly optimal learning rate: ' + str(found_lr))
 
 def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=epochs, device="cpu"):
