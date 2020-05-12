@@ -38,13 +38,13 @@ import os
  
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-folder_path = r'C:\Users\Pichau\PycharmProjects\manage_files\global_patterns'
+folder_path = './global_patterns'
 save_file = '../../Desktop/Results/ResNet50/'
 model_name = 'resnet50'
 
 im_size = 224
 epochs = 20  # Epochs before fine-tuning.
-epochs_ft = 50  # Epochs for fine-tuning.
+epochs_ft = 30  # Epochs for fine-tuning.
 batch_size = 32
 testing_with = 'validation'
 
@@ -133,8 +133,8 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         batch_num += 1
         
         # Progress
-        if batch_num%100==0:
-            print('Finding lr... nof data: ' + str(batch_num))
+        if batch_num%10==0:
+            print('Finding lr... nof data: ' + str(batch_num) + '+')
             
         inputs, targets = data
         inputs = inputs.to(device)
@@ -224,6 +224,7 @@ gc.collect() # Summon the garbage collector
 
 # Reload
 transfer_model = torch.load('./tmp/' + model_name)
+os.remove('./tmp/' + model_name)
 transfer_model.to(device)
 
 if found_lr == None:
@@ -249,7 +250,7 @@ optimizer = optim.Adam([
 train(transfer_model, optimizer, torch.nn.CrossEntropyLoss(), train_data_loader, val_data_loader, epochs=epochs_ft, device=device)
    
 # Saving model
-torch.save(transfer_model, './models/' + model_name + '_' + str(epochs + epochs_ft) + 'epochs')
+#torch.save(transfer_model, './models/' + model_name + '_' + str(epochs + epochs_ft) + 'epochs')
 torch.save(transfer_model.state_dict(), './models/' + model_name + '_dict_' + str(epochs + epochs_ft) + 'epochs')
  
 
