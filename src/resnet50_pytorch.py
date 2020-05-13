@@ -39,12 +39,18 @@ from math import trunc, log
  
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-folder_path = './global_patterns'
-save_file = '../../Desktop/Results/ResNet50/'
 model_name = 'resnet50'
+folder_path = './global_patterns'
+save_file = '../../Desktop/Results/PyTorch/' + model_name
 
 if not os.path.isdir(save_file):
     os.mkdir(save_file)
+    
+if not os.path.isdir('./tmp'):
+    os.mkdir('./tmp')
+    
+if not os.path.isdir('./models'):
+    os.mkdir('./models')
 
 im_size = 224
 epochs = 20  # Epochs before fine-tuning.
@@ -180,7 +186,7 @@ plt.plot(logs, losses)  # Plotting learning rate graph.
 plt.xscale("log")
 plt.xlabel("Learning rate")
 plt.ylabel("Loss")
-plt.show()
+#plt.show()
 plt.savefig(save_file + '/lr.png')
 
 def distance(x):  # Logarithmic distance.
