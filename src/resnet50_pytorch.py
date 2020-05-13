@@ -5,13 +5,14 @@ import torch.utils.data
 import torch.nn.functional as F
 import torchvision
 import torchvision.models as models
-from torchvision import transforms
-from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import ImageFile
 import gc
 import os
+from torchvision import transforms
+from PIL import Image
+from PIL import ImageFile
+from math import trunc, log
 
 # =============================================================================
 # Format of data folders:
@@ -167,6 +168,8 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
 
         # Update the lr for the next step and store
         lr *= update_step
+        if lr > 1e-1:
+            break
         optimizer.param_groups[0]["lr"] = lr
     return log_lrs[10:-5], losses[10:-5]
 
@@ -174,17 +177,24 @@ optimizer = optim.Adam(transfer_model.parameters())
 
 logs,losses = find_lr(transfer_model, torch.nn.CrossEntropyLoss(), optimizer, train_data_loader)
 plt.plot(logs, losses)  # Plotting learning rate graph.
-plt.savefig(save_file + 'lr.png')
+plt.xscale("log")
+plt.xlabel("Learning rate")
+plt.ylabel("Loss")
+plt.show()
+plt.savefig(save_file + '/lr.png')
 
-# Finding best learning rate using the heuristics above.
+def distance(x):  # Logarithmic distance.
+    offset = log(10)
+    return -(log(x) - offset) / (log(1e-1) - offset)  # Distances grow towards value 0.
+
 best = 0
 found_lr = None
 for i in range(len(logs)):
     if i != 0:
-        cur = (losses[i-1] - losses[i]) / (logs[i] - logs[i-1])
-        if cur > best and logs[i-1] > 1e-4:  # Minimum 1e-4.
+        cur = (losses[i-1] - losses[i]) / (distance(logs[i]) - distance(logs[i-1]))
+        if cur > best:
             best = cur
-            found_lr = logs[i-1] + (logs[i] - logs[i-1])/3  # 1/3 of the way.
+            found_lr = logs[i-1]
 print('Reportedly optimal learning rate: ' + str(found_lr))
 
 def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=epochs, device="cpu"):
@@ -292,9 +302,7 @@ for batch in data_loader:
   num_examples += correct.shape[0]
 valid_loss /= len(data_loader.dataset)
 
-print(confusion_matrix)
-
-from math import trunc           
+print(confusion_matrix)      
 
 # Metrics
    
