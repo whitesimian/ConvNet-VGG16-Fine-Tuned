@@ -10,8 +10,7 @@ import numpy as np
 import gc
 import os
 from torchvision import transforms
-from PIL import Image
-from PIL import ImageFile
+from PIL import Image, ImageFile
 from math import trunc, log
 
 # =============================================================================
@@ -58,6 +57,7 @@ epochs_ft = 30  # Epochs for fine-tuning.
 batch_size = 32
 testing_with = 'validation'
 
+print('Running ' + model_name + '...')
 num_classes = len(os.listdir(folder_path + r'\training'))
 print('Found ' + str(num_classes) + ' classes.')
 
@@ -254,6 +254,9 @@ optimizer = optim.Adam(transfer_model.parameters(), lr=found_lr)
 # Training
 train(transfer_model, optimizer,torch.nn.CrossEntropyLoss(), train_data_loader, val_data_loader, epochs=epochs, device=device)
 
+# Save
+torch.save(transfer_model.state_dict(), './models/' + model_name + '_dict_' + str(epochs) + 'epochs')
+
 # Unfreezing some convolutional layers for fine-tuning.
 unfreeze_layers = [transfer_model.layer3, transfer_model.layer4]
 for layer in unfreeze_layers:
@@ -265,11 +268,13 @@ optimizer = optim.Adam([
         { 'params': transfer_model.layer3.parameters(), 'lr': found_lr /9},
         ], lr=found_lr)
 
-# Fine-tuning
+# Fine-tuning.
 train(transfer_model, optimizer, torch.nn.CrossEntropyLoss(), train_data_loader, val_data_loader, epochs=epochs_ft, device=device)
-   
-# Saving model
-#torch.save(transfer_model, './models/' + model_name + '_' + str(epochs + epochs_ft) + 'epochs')
+
+# Remove previous save.
+os.remove('./models/' + model_name + '_dict_' + str(epochs) + 'epochs')
+
+# Saving final model.
 torch.save(transfer_model.state_dict(), './models/' + model_name + '_dict_' + str(epochs + epochs_ft) + 'epochs')
  
 
