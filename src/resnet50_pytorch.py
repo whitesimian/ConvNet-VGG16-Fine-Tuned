@@ -192,7 +192,7 @@ def distance(x):  # Logarithmic distance.
 
 best = 0
 found_lr = None
-if len(logs > 20):
+if len(logs) > 20:
     logs = logs[10:-5]  # Ignores the beginning and the end of the graph.
     losses = losses[10:-5]
 
