@@ -61,7 +61,7 @@ print('Running ' + model_name + '...')
 num_classes = len(os.listdir(folder_path + r'\training'))
 print('Found ' + str(num_classes) + ' classes.')
 
-#torch.hub.list('pytorch/vision')  # Modelos disponíveis no github
+#torch.hub.list('pytorch/vision')  # Print all available models on github.
 
 train_transform = transforms.Compose([
     # transforms.RandomHorizontalFlip(p=0.5), # used for data augmentation
@@ -155,10 +155,7 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
 
         # Crash out if loss explodes
         if batch_num > 1 and loss > 4 * best_loss:
-            if(len(log_lrs) > 20):
-                return log_lrs[10:-5], losses[10:-5]
-            else:
-                return log_lrs, losses
+            return log_lrs, losses
 
         # Record the best loss
         if loss < best_loss or batch_num == 1:
@@ -177,7 +174,7 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         if lr > 1e-1:
             break
         optimizer.param_groups[0]["lr"] = lr
-    return log_lrs[10:-5], losses[10:-5]
+    return log_lrs, losses
 
 optimizer = optim.Adam(transfer_model.parameters())
 
@@ -195,6 +192,10 @@ def distance(x):  # Logarithmic distance.
 
 best = 0
 found_lr = None
+if len(logs > 20):
+    logs = logs[10:-5]  # Ignores the beginning and the end of the graph.
+    losses = losses[10:-5]
+
 for i in range(len(logs)):
     if i != 0:
         cur = (losses[i-1] - losses[i]) / (distance(logs[i]) - distance(logs[i-1]))
@@ -343,8 +344,8 @@ for row in confusion_matrix:
 f.write('METRICS:\n')
 f.write(' '*longer + 3*' ')
 f.write('{:>12}'.format('Accuracy') + ' ')
-f.write('{:>12}'.format('Sensitivity') + ' ')
-f.write('{:>12}'.format(' Specificity\n'))
+f.write('{:>12}'.format('Sensitivity') + '  ')
+f.write('{:>12}'.format('Specificity\n'))
 
 acc_avg = 0
 sens_avg = 0
