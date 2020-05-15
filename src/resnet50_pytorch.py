@@ -352,18 +352,18 @@ specf_avg = 0
 for i in range(len(confusion_matrix)):
     f.write(('{:<' + str(longer) + '}').format(target_names[i]) + '   ')
     TP = 0; TN = 0; FP = 0; FN = 0
-    for j in range(len(confusion_matrix[i])):
-        if i==j:
-            TP += confusion_matrix[i][j]
+    for j in range(len(confusion_matrix[i])):  # Within the images of the class.
+        if i == j:
+            TP += confusion_matrix[i][j]  # Correctly identified.
         else:
-            FP += confusion_matrix[i][j]
-    for j in range(len(confusion_matrix)):
-        if j!=i:
-            FN += confusion_matrix[i][j]
-    TN = total - confusion_matrix[i][i] - FN
-    acc = float(TN+TP)/(TN+TP+FN+FP)
-    sens = float(TP)/(TP+FN)
-    specf = float(TN)/(TN+FP)
+            FP += confusion_matrix[i][j]  # All the others.
+    for j in range(len(confusion_matrix)):  # Within all identified as the class.
+        if j != i:
+            FN += confusion_matrix[j][i]  # Column of the class.
+    TN = total - (TP + FN + FP)
+    acc = float(TN + TP) / (TN + TP + FN + FP)
+    sens = float(TP) / (TP + FN)
+    specf = float(TN) / (TN + FP)
     acc_avg += acc
     sens_avg += sens
     specf_avg += specf
