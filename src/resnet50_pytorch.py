@@ -155,7 +155,10 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
 
         # Crash out if loss explodes
         if batch_num > 1 and loss > 4 * best_loss:
-            return log_lrs, losses
+            if(len(log_lrs) > 20):
+                return log_lrs[10:-5], losses[10:-5]
+            else:
+                return log_lrs, losses
 
         # Record the best loss
         if loss < best_loss or batch_num == 1:
@@ -174,7 +177,7 @@ def find_lr(model, loss_fn, optimizer, train_loader, init_value=1e-8, final_valu
         if lr > 1e-1:
             break
         optimizer.param_groups[0]["lr"] = lr
-    return log_lrs, losses
+    return log_lrs[10:-5], losses[10:-5]  # Ignores the beginning and the end of the graph.
 
 optimizer = optim.Adam(transfer_model.parameters())
 
@@ -192,10 +195,6 @@ def distance(x):  # Logarithmic distance.
 
 best = 0
 found_lr = None
-if len(logs) > 20:
-    logs = logs[10:-5]  # Ignores the beginning and the end of the graph.
-    losses = losses[10:-5]
-
 for i in range(len(logs)):
     if i != 0:
         cur = (losses[i-1] - losses[i]) / (distance(logs[i]) - distance(logs[i-1]))
