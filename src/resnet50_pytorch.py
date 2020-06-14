@@ -306,7 +306,7 @@ for batch in data_loader:
   classes = torch.max(F.softmax(output), dim=1)[1]
   
   for c,t in zip(classes,targets):
-    confusion_matrix[c][t] = confusion_matrix[c][t]+1
+    confusion_matrix[t][c] = confusion_matrix[t][c]+1  # Each line represents the set of images for each class. Column is how were they classified.
 
   correct = torch.eq(torch.max(F.softmax(output), dim=1)[1], targets).view(-1)
   num_correct += torch.sum(correct).item()
@@ -356,10 +356,10 @@ for i in range(len(confusion_matrix)):
         if i == j:
             TP += confusion_matrix[i][j]  # Correctly identified.
         else:
-            FP += confusion_matrix[i][j]  # All the others.
+            FN += confusion_matrix[i][j]  # All the others.
     for j in range(len(confusion_matrix)):  # Within all identified as the class.
         if j != i:
-            FN += confusion_matrix[j][i]  # Column of the class.
+            FP += confusion_matrix[j][i]  # Column of the class.
     TN = total - (TP + FN + FP)
     acc = float(TN + TP) / (TN + TP + FN + FP)
     sens = float(TP) / (TP + FN)
