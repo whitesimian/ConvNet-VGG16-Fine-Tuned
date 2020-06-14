@@ -306,7 +306,7 @@ for batch in data_loader:
   classes = torch.max(F.softmax(output), dim=1)[1]
   
   for c,t in zip(classes,targets):
-    confusion_matrix[t][c] = confusion_matrix[t][c]+1
+    confusion_matrix[c][t] = confusion_matrix[c][t]+1
 
   correct = torch.eq(torch.max(F.softmax(output), dim=1)[1], targets).view(-1)
   num_correct += torch.sum(correct).item()
