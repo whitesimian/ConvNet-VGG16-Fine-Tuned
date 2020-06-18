@@ -63,15 +63,6 @@ print('Found ' + str(num_classes) + ' classes.')
 
 #torch.hub.list('pytorch/vision')  # Print all available models on github.
 
-train_transform = transforms.Compose([
-    # transforms.RandomHorizontalFlip(p=0.5), # used for data augmentation
-    # transforms.RandomVerticalFlip(p=0.5), # used for data augmentation
-    transforms.Resize((im_size,im_size)), 
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225] )                            
-])
-
 img_transforms = transforms.Compose([
     transforms.Resize((im_size,im_size)), 
     transforms.ToTensor(),
